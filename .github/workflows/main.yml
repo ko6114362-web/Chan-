@@ -38,15 +38,17 @@ jobs:
 
       - name: Extract Android Project
         run: |
+          ls -la
           mkdir -p source
           ZIP_FILE=$(find . -maxdepth 3 -name "*.zip" -not -path "./source/*" | head -n 1)
-          if [ -n "$ZIP_FILE" ]; then
-            echo "Extracting $ZIP_FILE..."
-            unzip -q "$ZIP_FILE" -d source
-          else
-            echo "No zip file found, copying repository files..."
-            cp -r . source/
+          echo "Found zip: $ZIP_FILE"
+          if [ -z "$ZIP_FILE" ]; then
+            echo "Error: No .zip file found in repository!"
+            exit 1
           fi
+          unzip -q "$ZIP_FILE" -d source
+          find source -maxdepth 4 -name "gradlew"
+
 
       - name: Build APK
         run: |
