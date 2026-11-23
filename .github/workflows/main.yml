@@ -1,3 +1,4 @@
+
 name: Build Chan Shop APK
 
 on:
@@ -24,41 +25,48 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
-        with:
-          packages: |
-            platforms;android-35
+
+      - name: Install Android SDK Platform
+        run: |
+          sdkmanager "platforms;android-35"
+          sdkmanager "build-tools;35.0.0"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
 
       - name: Extract Android Project
         run: |
           mkdir -p source
           unzip -q ChanShopAndroid_KBZPay_Project.zip -d source
-          ls -la source
+          find source -name "settings.gradle*" -print
 
-               - name: Build APK
-          run: |
+      - name: Build APK
+        run: |
           SETTINGS_FILE=$(find source -name "settings.gradle.kts" -o -name "settings.gradle" | head -n 1)
-          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
-          APP_GRADLE="$PROJECT_DIR/app/build.gradle.kts"
-          if [ -f "$APP_GRADLE" ]; then
-            sed -i 's/buildFeatures {/compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }\n    kotlinOptions { jvmTarget = "17" }\n    buildFeatures {/' "$APP_GRADLE"
-          fi
-          cd "$PROJECT_DIR"
-          gradle assembleDebug -Dorg.gradle.java.home=$JAVA_HOME --stacktrace
-         
 
+          if [ -z "$SETTINGS_FILE" ]; then
+            echo "ERROR: settings.gradle not found!"
+            exit 1
+          fi
+
+          PROJECT_DIR=$(dirname "$SETTINGS_FILE")
+
+          echo "Project directory: $PROJECT_DIR"
+
+          cd "$PROJECT_DIR"
+
+          gradle --version
+
+          gradle assembleDebug \
+            -Dorg.gradle.java.home="$JAVA_HOME" \
+            --stacktrace \
+            --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Chan-Shop-APK
-          path: source/**/app/build/outputs/apk/debug/*.apk
+          path: source/**/build/outputs/apk/debug/*.apk
           if-no-files-found: error
-          
