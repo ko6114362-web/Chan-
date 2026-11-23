@@ -38,21 +38,17 @@ jobs:
           mkdir -p source
           unzip -q ChanShopAndroid_KBZPay_Project.zip -d source
           find source -name "settings.gradle*" -print
-      - name: Build APK
-        run: |
+            - name: Build APK
+          run: |
           SETTINGS_FILE=$(find source -name "settings.gradle.kts" -o -name "settings.gradle" | head -n 1)
-          if [ -z "$SETTINGS_FILE" ]; then
-            echo "ERROR: settings.gradle not found!"
-            exit 1
-          fi
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
-          echo "Project directory: $PROJECT_DIR"
+          APP_GRADLE="$PROJECT_DIR/app/build.gradle.kts"
+          if [ -f "$APP_GRADLE" ]; then
+            printf '\nkotlin {\n    jvmToolchain(17)\n}\nandroid {\n    compileOptions {\n        sourceCompatibility = JavaVersion.VERSION_17\n        targetCompatibility = JavaVersion.VERSION_17\n    }\n}\n' >> "$APP_GRADLE"
+          fi
           cd "$PROJECT_DIR"
-          gradle --version
-          gradle assembleDebug \
-            -Dorg.gradle.java.home="$JAVA_HOME" \
-            --stacktrace \
-            --no-daemon
+          gradle assembleDebug -Dorg.gradle.java.home=$JAVA_HOME --stacktrace
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
