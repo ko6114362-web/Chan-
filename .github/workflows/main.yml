@@ -24,12 +24,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
           packages: |
             platforms;android-35
+            build-tools;35.0.0
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -38,22 +38,19 @@ jobs:
 
       - name: Extract Android Project
         run: |
-          ls -la
           mkdir -p source
-          ZIP_FILE=$(find . -maxdepth 3 -name "*.zip" -not -path "./source/*" | head -n 1)
-          echo "Found zip: $ZIP_FILE"
-          if [ -z "$ZIP_FILE" ]; then
-            echo "Error: No .zip file found in repository!"
+          unzip -q ChanShopAndroid_KBZPay_Project.zip -d source
+          ls -la source
+
+      - name: Build APK
+        run: |
+          SETTINGS_FILE=$(find source -name "settings.gradle.kts" -o -name "settings.gradle" | head -n 1)
+          if [ -z "$SETTINGS_FILE" ]; then
+            echo "Error: Android project not found!"
             exit 1
           fi
-          unzip -q "$ZIP_FILE" -d source
-          find source -maxdepth 4 -name "gradlew"
-
-
-            - name: Build APK
-           run: |
-          SETTINGS_FILE=$(find source -name "settings.gradle.kts" -o -name "settings.gradle" | head -n 1)
           PROJECT_DIR=$(dirname "$SETTINGS_FILE")
+          echo "Building inside: $PROJECT_DIR"
           cd "$PROJECT_DIR"
           gradle assembleDebug -Dorg.gradle.java.home=$JAVA_HOME --stacktrace
 
@@ -63,3 +60,4 @@ jobs:
           name: Chan-Shop-APK
           path: source/**/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+          
