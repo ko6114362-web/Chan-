@@ -65,6 +65,7 @@ if "jvmTarget" not in txt:
         jvmTarget = "17"
     } 
 """
+
     txt = txt.replace("buildFeatures {", block + "\n    buildFeatures {", 1)
     p.write_text(txt, encoding="utf-8")
 '
